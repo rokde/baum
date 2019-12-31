@@ -2,7 +2,7 @@
 
 class CategoryScopedTest extends CategoryTestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         with(new MultiScopedCategorySeeder())->run();
     }

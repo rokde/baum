@@ -3,14 +3,14 @@
 use Illuminate\Database\Capsule\Manager as DB;
 use Mockery as m;
 
-class NodeModelExtensionsTest extends PHPUnit_Framework_TestCase
+class NodeModelExtensionsTest extends \PHPUnit\Framework\TestCase
 {
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         with(new CategoryMigrator())->up();
     }
 
-    public function setUp()
+    public function setUp(): void
     {
         DB::table('categories')->delete();
     }
@@ -20,7 +20,7 @@ class NodeModelExtensionsTest extends PHPUnit_Framework_TestCase
         return forward_static_call_array([$className, 'where'], ['name', '=', $name])->first();
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
         m::close();
     }

@@ -4,7 +4,7 @@ use Illuminate\Database\Capsule\Manager as DB;
 
 class CategoryTreeMapperTest extends BaumTestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         with(new CategoryMigrator())->up();
     }

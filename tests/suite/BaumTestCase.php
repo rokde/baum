@@ -1,6 +1,6 @@
 <?php
 
-class BaumTestCase extends PHPUnit_Framework_TestCase
+class BaumTestCase extends \PHPUnit\Framework\TestCase
 {
     public function assertArraysAreEqual($expected, $actual, $message = '')
     {

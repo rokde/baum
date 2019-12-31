@@ -1,4 +1,6 @@
-<?php namespace Baum\Extensions\Eloquent;
+<?php
+
+namespace Baum\Extensions\Eloquent;
 
 use Baum\Node;
 use Illuminate\Database\Eloquent\Collection as BaseCollection;
@@ -10,63 +12,56 @@ use Illuminate\Database\Eloquent\Collection as BaseCollection;
  */
 class Collection extends BaseCollection
 {
-    /**
-     * @return BaseCollection
-     */
-    public function toHierarchy()
-    {
-        return new BaseCollection(
-            $this->hierarchical(
-                $this->getDictionary()
-            )
-        );
-    }
+	public function toHierarchy(): BaseCollection
+	{
+		return new BaseCollection(
+			$this->hierarchical(
+				$this->getDictionary()
+			)
+		);
+	}
 
-    /**
-     * @return BaseCollection
-     */
-    public function toSortedHierarchy()
-    {
-        $dict = $this->getDictionary();
+	public function toSortedHierarchy(): BaseCollection
+	{
+		$dict = $this->getDictionary();
 
-        // Enforce sorting by $orderColumn setting in Baum\Node instance
-        uasort($dict, function (Node $a, Node $b) {
-            return ($a->getOrder() >= $b->getOrder()) ? 1 : -1;
-        });
+		// Enforce sorting by $orderColumn setting in Baum\Node instance
+		uasort($dict, function (Node $a, Node $b) {
+			return ($a->getOrder() >= $b->getOrder()) ? 1 : -1;
+		});
 
-        return new BaseCollection($this->hierarchical($dict));
-    }
+		return new BaseCollection($this->hierarchical($dict));
+	}
 
-    /**
-     * @param array $result
-     * @return array
-     */
-    protected function hierarchical(array $result)
-    {
-        /** @var Node $node */
-        foreach ($result as $node) {
-            $node->setRelation('children', new BaseCollection());
-        }
+	/**
+	 * @param array|Node[] $result
+	 * @return array
+	 */
+	protected function hierarchical(array $result): array
+	{
+		/** @var Node $node */
+		foreach ($result as $node) {
+			$node->setRelation('children', new BaseCollection());
+		}
 
-        $nestedKeys = [];
+		$nestedKeys = [];
 
-        foreach ($result as $node)
-        {
-            $parentKey = $node->getParentId();
+		foreach ($result as $node) {
+			$parentKey = $node->getParentId();
 
-            if (
-                null !== $parentKey &&
-                array_key_exists($parentKey, $result)
-            ) {
-                $result[$parentKey]->children[] = $node;
-                $nestedKeys[] = $node->getKey();
-            }
-        }
+			if (
+				null !== $parentKey &&
+				array_key_exists($parentKey, $result)
+			) {
+				$result[$parentKey]->children[] = $node;
+				$nestedKeys[] = $node->getKey();
+			}
+		}
 
-        foreach ($nestedKeys as $key) {
-            unset($result[$key]);
-        }
+		foreach ($nestedKeys as $key) {
+			unset($result[$key]);
+		}
 
-        return $result;
-    }
+		return $result;
+	}
 }

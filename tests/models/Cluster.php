@@ -5,62 +5,62 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Cluster extends Node
 {
-    protected $table = 'clusters';
+	protected $table = 'clusters';
 
-    public $incrementing = false;
+	public $incrementing = false;
 
-    public $timestamps = false;
+	public $timestamps = false;
 
-    protected static function boot()
-    {
-        parent::boot();
+	protected static function boot()
+	{
+		parent::boot();
 
-        static::creating(function ($cluster) {
-            $cluster->ensureUuid();
-        });
-    }
+		static::creating(function ($cluster) {
+			$cluster->ensureUuid();
+		});
+	}
 
-    public function ensureUuid()
-    {
-        if (is_null($this->getAttribute($this->getKeyName()))) {
-            $this->setAttribute($this->getKeyName(), $this->generateUuid());
-        }
+	public function ensureUuid()
+	{
+		if (is_null($this->getAttribute($this->getKeyName()))) {
+			$this->setAttribute($this->getKeyName(), $this->generateUuid());
+		}
 
-        return $this;
-    }
+		return $this;
+	}
 
-    protected function generateUuid()
-    {
-        return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-      mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-      mt_rand(0, 0xffff),
-      mt_rand(0, 0x0fff) | 0x4000,
-      mt_rand(0, 0x3fff) | 0x8000,
-      mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
-    );
-    }
+	protected function generateUuid()
+	{
+		return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+			mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+			mt_rand(0, 0xffff),
+			mt_rand(0, 0x0fff) | 0x4000,
+			mt_rand(0, 0x3fff) | 0x8000,
+			mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+		);
+	}
 }
 
 class ScopedCluster extends Cluster
 {
-    protected $scoped = ['company_id'];
+	protected $scoped = ['company_id'];
 }
 
 class MultiScopedCluster extends Cluster
 {
-    protected $scoped = ['company_id', 'language'];
+	protected $scoped = ['company_id', 'language'];
 }
 
 class OrderedCluster extends Cluster
 {
-    protected $orderColumn = 'name';
+	protected $orderColumn = 'name';
 }
 
 class SoftCluster extends Cluster
 {
-    use SoftDeletes;
+	use SoftDeletes;
 
-    public $timestamps = true;
+	public $timestamps = true;
 
-    protected $dates = ['deleted_at'];
+	protected $dates = ['deleted_at'];
 }

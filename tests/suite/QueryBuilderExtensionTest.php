@@ -3,9 +3,9 @@
 use Baum\Extensions\Query\Builder as QueryBuilder;
 use Mockery as m;
 
-class QueryBuilderExtensionTest extends PHPUnit_Framework_TestCase
+class QueryBuilderExtensionTest extends \PHPUnit\Framework\TestCase
 {
-    public function tearDown()
+    public function tearDown(): void
     {
         m::close();
     }
