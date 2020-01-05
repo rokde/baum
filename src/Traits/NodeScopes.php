@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
  * Trait NodeScopes
  * @package Baum\Traits
  *
+ * @method Builder|Node scoped
  * @method Builder|Node roots
  * @method Builder allLeaves
  * @method Builder|Node leaves
@@ -27,6 +28,21 @@ use Illuminate\Database\Eloquent\Builder;
  */
 trait NodeScopes
 {
+	/**
+	 * Adds a scope to the query when set in the node model
+	 *
+	 * @param Builder $query
+	 * @return Builder
+	 */
+	public function scopeScoped(Builder $query): Builder
+	{
+		foreach ($this->scoped as $scopeField) {
+			$query->where($scopeField, $this->$scopeField);
+		}
+
+		return $query;
+	}
+
 	/**
 	 * Static query scope. Returns a query scope with all root nodes.
 	 *
@@ -119,7 +135,7 @@ trait NodeScopes
 	 */
 	public function scopeWithoutNode(Builder $query, Node $node): Builder
 	{
-		return $query->where($node->getKeyName(), '!=', $node->getKey());
+		return $query->scoped()->where($node->getKeyName(), '!=', $node->getKey());
 	}
 
 	/**

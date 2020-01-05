@@ -396,7 +396,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	public function getRoot(): ?self
 	{
 		if ($this->exists) {
-			return $this->ancestorsAndSelf()
+			return $this->scoped()->ancestorsAndSelf()
 				->whereNull($this->getParentColumnName())
 				->first();
 		}
@@ -418,7 +418,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 */
 	public function getAncestorsAndSelf(array $columns = ['*']): Collection
 	{
-		return $this->ancestorsAndSelf()->get($columns);
+		return $this->scoped()->ancestorsAndSelf()->get($columns);
 	}
 
 	/**
@@ -431,7 +431,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 */
 	public function getAncestorsAndSelfWithoutRoot($columns = ['*']): Collection
 	{
-		return $this->ancestorsAndSelf()->withoutRoot()->get($columns);
+		return $this->scoped()->ancestorsAndSelf()->withoutRoot()->get($columns);
 	}
 
 	/**
@@ -443,7 +443,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 */
 	public function getAncestors($columns = ['*']): Collection
 	{
-		return $this->ancestors()->get($columns);
+		return $this->scoped()->ancestors()->get($columns);
 	}
 
 	/**
@@ -456,7 +456,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 */
 	public function getAncestorsWithoutRoot($columns = ['*']): Collection
 	{
-		return $this->ancestors()->withoutRoot()->get($columns);
+		return $this->scoped()->ancestors()->withoutRoot()->get($columns);
 	}
 
 	/**
@@ -468,7 +468,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 */
 	public function getSiblingsAndSelf($columns = ['*']): Collection
 	{
-		return $this->siblingsAndSelf()->get($columns);
+		return $this->scoped()->siblingsAndSelf()->get($columns);
 	}
 
 	/**
@@ -492,7 +492,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 */
 	public function getLeaves($columns = ['*']): Collection
 	{
-		return $this->leaves()->get($columns);
+		return $this->scoped()->leaves()->get($columns);
 	}
 
 	/**
@@ -504,7 +504,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 */
 	public function getTrunks($columns = ['*']): Collection
 	{
-		return $this->trunks()->get($columns);
+		return $this->scoped()->trunks()->get($columns);
 	}
 
 	/**
@@ -519,14 +519,14 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	public function getDescendantsAndSelf($columns = ['*']): Collection
 	{
 		if (is_array($columns)) {
-			return $this->descendantsAndSelf()->get($columns);
+			return $this->scoped()->descendantsAndSelf()->get($columns);
 		}
 
 		$arguments = func_get_args();
 		$limit = intval(array_shift($arguments));
 		$columns = array_shift($arguments) ?: ['*'];
 
-		return $this->descendantsAndSelf()->limitDepth($limit)->get($columns);
+		return $this->scoped()->descendantsAndSelf()->limitDepth($limit)->get($columns);
 	}
 
 	/**
@@ -553,7 +553,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	public function getDescendants($columns = ['*']): Collection
 	{
 		if (is_array($columns)) {
-			return $this->descendants()->get($columns);
+			return $this->scoped()->descendants()->get($columns);
 		}
 
 		$arguments = func_get_args();
@@ -561,7 +561,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 		$limit = intval(array_shift($arguments));
 		$columns = array_shift($arguments) ?: ['*'];
 
-		return $this->descendants()->limitDepth($limit)->get($columns);
+		return $this->scoped()->descendants()->limitDepth($limit)->get($columns);
 	}
 
 	/**
@@ -583,7 +583,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 */
 	public function getLeftSibling(): ?Node
 	{
-		return $this->siblings()
+		return $this->scoped()->siblings()
 			->where($this->getLeftColumnName(), '<', $this->getLeft())
 			->orderBy($this->getOrderColumnName(), 'desc')
 			->get()
@@ -597,7 +597,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 */
 	public function getRightSibling(): ?Node
 	{
-		return $this->siblings()
+		return $this->scoped()->siblings()
 			->where($this->getLeftColumnName(), '>', $this->getLeft())
 			->first();
 	}
@@ -829,7 +829,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 		$this->getConnection()->transaction(function () use ($self) {
 			$self->reload();
 
-			$self->descendantsAndSelf()->select($self->getKeyName())->lockForUpdate()->get();
+			$self->scoped()->descendantsAndSelf()->select($self->getKeyName())->lockForUpdate()->get();
 
 			$oldDepth = $self->getDepth() ?: 0;
 			$newDepth = $self->getLevel();
@@ -841,7 +841,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 
 			$diff = $newDepth - $oldDepth;
 			if ($diff != 0 && !$self->isLeaf()) {
-				$self->descendants()->increment($self->getDepthColumnName(), $diff);
+				$self->scoped()->descendants()->increment($self->getDepthColumnName(), $diff);
 			}
 		});
 
