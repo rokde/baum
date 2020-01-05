@@ -3,7 +3,8 @@
 namespace Baum;
 
 use Baum\Extensions\Eloquent\Collection;
-use Baum\Traits\NodeComparisonTrait;
+use Baum\Traits\NodeComparison;
+use Baum\Traits\TableColumnNames;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -38,7 +39,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 abstract class Node extends \Baum\Extensions\Eloquent\Model
 {
-	use NodeComparisonTrait;
+	use NodeComparison,
+		TableColumnNames;
 
 	/**
 	 * Column name to store the reference to parent's node.
@@ -145,28 +147,12 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 		});
 
 		static::saved(function (Node $node) {
-			/**
-			 * Fixes a bug that destroys the nested set when multiple create or delete operations are running at the
-			 * same time. Operations that require to rebuild the tree. Before only the rebuilding of the tree was inside
-			 * a transaction. The node is deleted, the rebuild in progress... Then a second node is deleted and the
-			 * second rebuild stops because of table locks. After the tree is broken.
-			 *
-			 * This early transaction should prevent of this case.
-			 */
 			$node->getConnection()->beginTransaction();
 			$node->moveToNewParent();
 			$node->setDepth();
 		});
 
 		static::deleting(function (Node $node) {
-			/**
-			 * Fixes a bug that destroys the nested set when multiple create or delete operations are running at the
-			 * same time. Operations that require to rebuild the tree. Before only the rebuilding of the tree was inside
-			 * a transaction. The node is deleted, the rebuild in progress... Then a second node is deleted and the
-			 * second rebuild stops because of table locks. After the tree is broken.
-			 *
-			 * This early transaction should prevent of this case.
-			 */
 			$node->getConnection()->beginTransaction();
 			$node->destroyDescendants();
 		});
@@ -192,17 +178,6 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	{
 		parent::finishSave($options);
 
-		/**
-		 * Fixes a bug that destroys the nested set when multiple create or delete operations are running at the
-		 * same time. Operations that require to rebuild the tree. Before only the rebuilding of the tree was inside
-		 * a transaction. The node is deleted, the rebuild in progress... Then a second node is deleted and the
-		 * second rebuild stops because of table locks. After the tree is broken.
-		 *
-		 * This early transaction should prevent of this case.
-		 *
-		 * Only commit if transaction was started
-		 * @link https://github.com/laravel/framework/issues/12382
-		 */
 		if ($this->getConnection()->transactionLevel() > 0) {
 			$this->getConnection()->commit();
 		}
@@ -238,26 +213,6 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	}
 
 	/**
-	 * Get the parent column name.
-	 *
-	 * @return string
-	 */
-	public function getParentColumnName(): string
-	{
-		return $this->parentColumn;
-	}
-
-	/**
-	 * Get the table qualified parent column name.
-	 *
-	 * @return string
-	 */
-	public function getQualifiedParentColumnName(): string
-	{
-		return $this->getTable() . '.' . $this->getParentColumnName();
-	}
-
-	/**
 	 * Get the value of the models "parent_id" field.
 	 *
 	 * @return int
@@ -265,26 +220,6 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	public function getParentId(): ?int
 	{
 		return $this->getAttribute($this->getParentColumnName());
-	}
-
-	/**
-	 * Get the "left" field column name.
-	 *
-	 * @return string
-	 */
-	public function getLeftColumnName(): string
-	{
-		return $this->leftColumn;
-	}
-
-	/**
-	 * Get the table qualified "left" field column name.
-	 *
-	 * @return string
-	 */
-	public function getQualifiedLeftColumnName(): string
-	{
-		return $this->getTable() . '.' . $this->getLeftColumnName();
 	}
 
 	/**
@@ -298,26 +233,6 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	}
 
 	/**
-	 * Get the "right" field column name.
-	 *
-	 * @return string
-	 */
-	public function getRightColumnName(): string
-	{
-		return $this->rightColumn;
-	}
-
-	/**
-	 * Get the table qualified "right" field column name.
-	 *
-	 * @return string
-	 */
-	public function getQualifiedRightColumnName(): string
-	{
-		return $this->getTable() . '.' . $this->getRightColumnName();
-	}
-
-	/**
 	 * Get the value of the model's "right" field.
 	 *
 	 * @return int
@@ -325,26 +240,6 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	public function getRight(): int
 	{
 		return $this->getAttribute($this->getRightColumnName()) + 0;
-	}
-
-	/**
-	 * Get the "depth" field column name.
-	 *
-	 * @return string
-	 */
-	public function getDepthColumnName(): string
-	{
-		return $this->depthColumn;
-	}
-
-	/**
-	 * Get the table qualified "depth" field column name.
-	 *
-	 * @return string
-	 */
-	public function getQualifiedDepthColumnName(): string
-	{
-		return $this->getTable() . '.' . $this->getDepthColumnName();
 	}
 
 	/**
@@ -358,26 +253,6 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	}
 
 	/**
-	 * Get the "order" field column name.
-	 *
-	 * @return string
-	 */
-	public function getOrderColumnName(): string
-	{
-		return $this->orderColumn ?: $this->getLeftColumnName();
-	}
-
-	/**
-	 * Get the table qualified "order" field column name.
-	 *
-	 * @return string
-	 */
-	public function getQualifiedOrderColumnName(): string
-	{
-		return $this->getTable() . '.' . $this->getOrderColumnName();
-	}
-
-	/**
 	 * Get the model's "order" value.
 	 *
 	 * @return mixed
@@ -385,45 +260,6 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	public function getOrder()
 	{
 		return $this->getAttribute($this->getOrderColumnName());
-	}
-
-	/**
-	 * Get the column names which define our scope.
-	 *
-	 * @return array
-	 */
-	public function getScopedColumns(): array
-	{
-		return $this->scoped;
-	}
-
-	/**
-	 * Get the qualified column names which define our scope.
-	 *
-	 * @return array
-	 */
-	public function getQualifiedScopedColumns(): array
-	{
-		if (!$this->isScoped()) {
-			return $this->getScopedColumns();
-		}
-
-		$prefix = $this->getTable() . '.';
-
-		return array_map(function ($c) use ($prefix) {
-			return $prefix . $c;
-		}, $this->getScopedColumns());
-	}
-
-	/**
-	 * Returns whether this particular node instance is scoped by certain fields
-	 * or not.
-	 *
-	 * @return bool
-	 */
-	public function isScoped(): bool
-	{
-		return count($this->getScopedColumns()) > 0;
 	}
 
 	/**
@@ -838,7 +674,6 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 * @param array $columns
 	 *
 	 * @return \Baum\Extensions\Eloquent\Collection|\Baum\Node[]
-	 * @TODO getLeaves() does not recognize the own tree
 	 */
 	public function getLeaves($columns = ['*']): Collection
 	{

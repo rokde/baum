@@ -4,7 +4,7 @@ namespace Baum\Traits;
 
 use Baum\Node;
 
-trait NodeComparisonTrait
+trait NodeComparison
 {
 	/**
 	 * Returns true if node is a descendant.
