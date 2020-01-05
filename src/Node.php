@@ -206,9 +206,9 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	/**
 	 * Get the value of the models "parent_id" field.
 	 *
-	 * @return int|null
+	 * @return int|null|string
 	 */
-	public function getParentId(): ?int
+	public function getParentId()
 	{
 		return $this->getAttribute($this->getParentColumnName());
 	}

@@ -316,9 +316,9 @@ class Move
 	/**
 	 * Computes the new parent id for the node being moved.
 	 *
-	 * @return int|null
+	 * @return int|null|string
 	 */
-	protected function parentId(): ?int
+	protected function parentId()
 	{
 		switch ($this->position) {
 			case 'root':
