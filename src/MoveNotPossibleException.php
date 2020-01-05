@@ -2,6 +2,8 @@
 
 namespace Baum;
 
-class MoveNotPossibleException extends \RuntimeException
+use RuntimeException;
+
+class MoveNotPossibleException extends RuntimeException
 {
 }

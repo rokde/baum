@@ -9,48 +9,36 @@ use Illuminate\Support\ServiceProvider;
 
 class BaumServiceProvider extends ServiceProvider
 {
-	/**
-	 * Baum version.
-	 *
-	 * @var string
-	 */
-	const VERSION = '2.0.0';
+    public function register()
+    {
+        if (!$this->app->runningInConsole()) {
+            return;
+        }
 
-	public function register()
-	{
-		if (!$this->app->runningInConsole()) {
-			return;
-		}
+        $this->registerInstallCommand();
 
-		$this->registerInstallCommand();
+        // Resolve the commands with Artisan by attaching the event listener to Artisan's
+        // startup. This allows us to use the commands from our terminal.
+        $this->commands('command.baum.install');
+    }
 
-		// Resolve the commands with Artisan by attaching the event listener to Artisan's
-		// startup. This allows us to use the commands from our terminal.
-		$this->commands('command.baum.install');
-	}
+    protected function registerInstallCommand(): void
+    {
+        $this->app->singleton('command.baum.install', function ($app) {
+            $migrator = new MigrationGenerator($app['files']);
+            $modeler = new ModelGenerator($app['files']);
 
-	/**
-	 * Register the 'baum:install' command.
-	 *
-	 * @return void
-	 */
-	protected function registerInstallCommand()
-	{
-		$this->app->singleton('command.baum.install', function ($app) {
-			$migrator = new MigrationGenerator($app['files']);
-			$modeler = new ModelGenerator($app['files']);
+            return new InstallCommand($migrator, $modeler);
+        });
+    }
 
-			return new InstallCommand($migrator, $modeler);
-		});
-	}
-
-	/**
-	 * Get the services provided by the provider.
-	 *
-	 * @return array
-	 */
-	public function provides()
-	{
-		return ['command.baum.install'];
-	}
+    /**
+     * Get the services provided by the provider.
+     *
+     * @return array
+     */
+    public function provides()
+    {
+        return ['command.baum.install'];
+    }
 }

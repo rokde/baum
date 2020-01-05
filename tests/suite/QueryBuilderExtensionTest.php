@@ -2,8 +2,9 @@
 
 use Baum\Extensions\Query\Builder as QueryBuilder;
 use Mockery as m;
+use PHPUnit\Framework\TestCase;
 
-class QueryBuilderExtensionTest extends \PHPUnit\Framework\TestCase
+class QueryBuilderExtensionTest extends TestCase
 {
     public function tearDown(): void
     {
@@ -29,34 +30,34 @@ class QueryBuilderExtensionTest extends \PHPUnit\Framework\TestCase
     public function testAggregatesRemoveOrderBy()
     {
         // TODO: Find out why this errors
-    // $builder = $this->getBuilder();
-    // $builder->getConnection()->shouldReceive('select')->once()->with('select count(*) as aggregate from "users"', array())->andReturn(array(array('aggregate' => 1)));
-    // $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function($builder, $results) { return $results; });
-    // $results = $builder->from('users')->orderBy('age', 'desc')->count();
-    // $this->assertEquals(1, $results);
+        // $builder = $this->getBuilder();
+        // $builder->getConnection()->shouldReceive('select')->once()->with('select count(*) as aggregate from "users"', array())->andReturn(array(array('aggregate' => 1)));
+        // $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function($builder, $results) { return $results; });
+        // $results = $builder->from('users')->orderBy('age', 'desc')->count();
+        // $this->assertEquals(1, $results);
 
-    // $builder = $this->getBuilder();
-    // $builder->getConnection()->shouldReceive('select')->once()->with('select count(*) as aggregate from "users" limit 1', array())->andReturn(array(array('aggregate' => 1)));
-    // $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function($builder, $results) { return $results; });
-    // $results = $builder->from('users')->orderBy('age', 'desc')->exists();
-    // $this->assertTrue($results);
+        // $builder = $this->getBuilder();
+        // $builder->getConnection()->shouldReceive('select')->once()->with('select count(*) as aggregate from "users" limit 1', array())->andReturn(array(array('aggregate' => 1)));
+        // $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function($builder, $results) { return $results; });
+        // $results = $builder->from('users')->orderBy('age', 'desc')->exists();
+        // $this->assertTrue($results);
 
-    // $builder = $this->getBuilder();
-    // $builder->getConnection()->shouldReceive('select')->once()->with('select max("id") as aggregate from "users"', array())->andReturn(array(array('aggregate' => 1)));
-    // $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function($builder, $results) { return $results; });
-    // $results = $builder->from('users')->orderBy('age', 'desc')->max('id');
-    // $this->assertEquals(1, $results);
+        // $builder = $this->getBuilder();
+        // $builder->getConnection()->shouldReceive('select')->once()->with('select max("id") as aggregate from "users"', array())->andReturn(array(array('aggregate' => 1)));
+        // $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function($builder, $results) { return $results; });
+        // $results = $builder->from('users')->orderBy('age', 'desc')->max('id');
+        // $this->assertEquals(1, $results);
 
-    // $builder = $this->getBuilder();
-    // $builder->getConnection()->shouldReceive('select')->once()->with('select min("id") as aggregate from "users"', array())->andReturn(array(array('aggregate' => 1)));
-    // $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function($builder, $results) { return $results; });
-    // $results = $builder->from('users')->orderBy('age', 'desc')->min('id');
-    // $this->assertEquals(1, $results);
+        // $builder = $this->getBuilder();
+        // $builder->getConnection()->shouldReceive('select')->once()->with('select min("id") as aggregate from "users"', array())->andReturn(array(array('aggregate' => 1)));
+        // $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function($builder, $results) { return $results; });
+        // $results = $builder->from('users')->orderBy('age', 'desc')->min('id');
+        // $this->assertEquals(1, $results);
 
-    // $builder = $this->getBuilder();
-    // $builder->getConnection()->shouldReceive('select')->once()->with('select sum("id") as aggregate from "users"', array())->andReturn(array(array('aggregate' => 1)));
-    // $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function($builder, $results) { return $results; });
-    // $results = $builder->from('users')->orderBy('age', 'desc')->sum('id');
-    // $this->assertEquals(1, $results);
+        // $builder = $this->getBuilder();
+        // $builder->getConnection()->shouldReceive('select')->once()->with('select sum("id") as aggregate from "users"', array())->andReturn(array(array('aggregate' => 1)));
+        // $builder->getProcessor()->shouldReceive('processSelect')->once()->andReturnUsing(function($builder, $results) { return $results; });
+        // $results = $builder->from('users')->orderBy('age', 'desc')->sum('id');
+        // $this->assertEquals(1, $results);
     }
 }

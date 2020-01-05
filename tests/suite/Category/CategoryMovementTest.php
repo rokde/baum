@@ -1,5 +1,7 @@
 <?php
 
+use Baum\MoveNotPossibleException;
+
 class CategoryMovementTest extends CategoryTestCase
 {
     public function testMoveLeft()
@@ -16,7 +18,7 @@ class CategoryMovementTest extends CategoryTestCase
         $node = $this->categories('Child 2');
 
         $node->moveLeft();
-        $this->expectException(\Baum\MoveNotPossibleException::class);
+        $this->expectException(MoveNotPossibleException::class);
         $node->moveLeft();
     }
 
@@ -57,7 +59,7 @@ class CategoryMovementTest extends CategoryTestCase
 
     public function testMoveToLeftOfRaisesAnExceptionWhenNotPossible()
     {
-    	$this->expectException(\Baum\MoveNotPossibleException::class);
+        $this->expectException(MoveNotPossibleException::class);
 
         $this->categories('Child 1')->moveToLeftOf($this->categories('Child 1')->getLeftSibling());
     }
@@ -86,7 +88,7 @@ class CategoryMovementTest extends CategoryTestCase
         $this->assertEquals(2, $this->categories('Child 2.1')->getDepth());
     }
 
-	/** @TODO inspect failures */
+    /** @TODO inspect failures */
     public function testMoveRight()
     {
         $this->categories('Child 2')->moveRight();
@@ -102,7 +104,7 @@ class CategoryMovementTest extends CategoryTestCase
         $node = $this->categories('Child 2');
 
         $node->moveRight();
-        $this->expectException(\Baum\MoveNotPossibleException::class);
+        $this->expectException(MoveNotPossibleException::class);
         $node->moveRight();
     }
 
@@ -132,7 +134,7 @@ class CategoryMovementTest extends CategoryTestCase
         $this->assertEquals(2, $this->categories('Child 2.1')->getDepth());
     }
 
-	/** @TODO inspect failures */
+    /** @TODO inspect failures */
     public function testMoveToRightOf()
     {
         $this->categories('Child 1')->moveToRightOf($this->categories('Child 3'));
@@ -147,7 +149,7 @@ class CategoryMovementTest extends CategoryTestCase
 
     public function testMoveToRightOfRaisesAnExceptionWhenNotPossible()
     {
-    	$this->expectException(\Baum\MoveNotPossibleException::class);
+        $this->expectException(MoveNotPossibleException::class);
 
         $this->categories('Child 3')->moveToRightOf($this->categories('Child 3')->getRightSibling());
     }
@@ -463,7 +465,7 @@ class CategoryMovementTest extends CategoryTestCase
     {
         $unpersisted = new Category(['name' => 'Unpersisted']);
 
-        $this->expectException(\Baum\MoveNotPossibleException::class);
+        $this->expectException(MoveNotPossibleException::class);
         $unpersisted->moveToRightOf($this->categories('Root 1'));
     }
 
@@ -471,7 +473,7 @@ class CategoryMovementTest extends CategoryTestCase
     {
         $unpersisted = new Category(['name' => 'Unpersisted']);
 
-        $this->expectException(\Baum\MoveNotPossibleException::class);
+        $this->expectException(MoveNotPossibleException::class);
         $unpersisted->makeChildOf($this->categories('Root 1'));
     }
 
@@ -479,7 +481,7 @@ class CategoryMovementTest extends CategoryTestCase
     {
         $node = $this->categories('Child 1');
 
-        $this->expectException(\Baum\MoveNotPossibleException::class);
+        $this->expectException(MoveNotPossibleException::class);
         $node->moveToRightOf($node);
     }
 
@@ -487,7 +489,7 @@ class CategoryMovementTest extends CategoryTestCase
     {
         $node = $this->categories('Child 1');
 
-        $this->expectException(\Baum\MoveNotPossibleException::class);
+        $this->expectException(MoveNotPossibleException::class);
         $node->makeChildOf($node);
     }
 
@@ -495,7 +497,7 @@ class CategoryMovementTest extends CategoryTestCase
     {
         $node = $this->categories('Root 1');
 
-        $this->expectException(\Baum\MoveNotPossibleException::class);
+        $this->expectException(MoveNotPossibleException::class);
         $node->makeChildOf($this->categories('Child 2.1'));
     }
 
