@@ -4,6 +4,8 @@ namespace Baum;
 
 use Baum\Extensions\Eloquent\Collection;
 use Baum\Traits\NodeComparison;
+use Baum\Traits\NodeScopes;
+use Baum\Traits\SelfComparison;
 use Baum\Traits\TableColumnNames;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -23,24 +25,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read Node|null $parent
  * @property-read Node[]|array $children
  * @property-read Node[]|array $immediateDescendants
- * @method Builder|Node roots
- * @method Builder|Node leaves
- * @method Builder|Node trunks
- * @method Builder|Node withoutNode(Node $node)
- * @method Builder|Node withoutSelf
- * @method Builder|Node withoutRoot
- * @method Builder|Node limitDepth(int $depth)
- * @method Builder|Node ancestorsAndSelf
- * @method Builder|Node ancestors
- * @method Builder|Node siblingsAndSelf
- * @method Builder|Node siblings
- * @method Builder|Node descendantsAndSelf
- * @method Builder|Node descendants
  */
 abstract class Node extends \Baum\Extensions\Eloquent\Model
 {
 	use NodeComparison,
-		TableColumnNames;
+		SelfComparison,
+		TableColumnNames,
+		NodeScopes;
 
 	/**
 	 * Column name to store the reference to parent's node.
@@ -263,6 +254,21 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	}
 
 	/**
+	 * Returns the level of this node in the tree.
+	 * Root level is 0.
+	 *
+	 * @return int
+	 */
+	public function getLevel(): int
+	{
+		if ($this->getParentId() === null) {
+			return 0;
+		}
+
+		return $this->computeLevel();
+	}
+
+	/**
 	 * Parent relation (self-referential) 1-1.
 	 *
 	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -281,6 +287,16 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	{
 		return $this->hasMany(get_class($this), $this->getParentColumnName())
 			->orderBy($this->getOrderColumnName());
+	}
+
+	/**
+	 * Set of "immediate" descendants (aka children), alias for the children relation.
+	 *
+	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 */
+	public function immediateDescendants(): HasMany
+	{
+		return $this->children();
 	}
 
 	/**
@@ -341,79 +357,24 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	}
 
 	/**
-	 * Static query scope. Returns a query scope with all root nodes.
-	 *
-	 * @param Builder $query
-	 * @return Builder
-	 */
-	public static function scopeRoots(Builder $query): Builder
-	{
-		return $query
-			->whereNull(with(new static())->getParentColumnName())
-			->orderBy(with(new static())->getQualifiedOrderColumnName());
-	}
-
-	/**
-	 * Static query scope. Returns a query scope with all nodes which are at
-	 * the end of a branch.
-	 *
-	 * @param Builder $query
-	 * @return Builder
-	 */
-	public static function scopeLeaves(Builder $query): Builder
-	{
-		$instance = new static();
-
-		$grammar = $instance->getConnection()->getQueryGrammar();
-
-		$rgtCol = $grammar->wrap($instance->getQualifiedRightColumnName());
-		$lftCol = $grammar->wrap($instance->getQualifiedLeftColumnName());
-
-		return $query
-			->whereRaw($rgtCol . ' - ' . $lftCol . ' = 1')
-			->orderBy($instance->getQualifiedOrderColumnName());
-	}
-
-	/**
-	 * Static query scope. Returns a query scope with all nodes which are at
-	 * the middle of a branch (not root and not leaves).
-	 *
-	 * @param Builder $query
-	 * @return Builder
-	 */
-	public static function scopeTrunks(Builder $query): Builder
-	{
-		$instance = new static();
-
-		$grammar = $instance->getConnection()->getQueryGrammar();
-
-		$rgtCol = $grammar->wrap($instance->getQualifiedRightColumnName());
-		$lftCol = $grammar->wrap($instance->getQualifiedLeftColumnName());
-
-		return $query
-			->whereNotNull($instance->getParentColumnName())
-			->whereRaw($rgtCol . ' - ' . $lftCol . ' != 1')
-			->orderBy($instance->getQualifiedOrderColumnName());
-	}
-
-	/**
 	 * Checks whether the underlying Nested Set structure is valid.
 	 *
 	 * @return bool
 	 */
 	public static function isValidNestedSet(): bool
 	{
-		return with(new SetValidator(new static()))->passes();
+		return (new SetValidator(new static()))->passes();
 	}
 
 	/**
 	 * Rebuilds the structure of the current Nested Set.
 	 *
 	 * @return void
+	 * @throws \Throwable
 	 */
 	public static function rebuild(): void
 	{
-		with(new SetBuilder(new static()))->rebuild();
+		(new SetBuilder(new static()))->rebuild();
 	}
 
 	/**
@@ -424,102 +385,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 */
 	public static function buildTree($nodeList): bool
 	{
-		return with(new static())->makeTree($nodeList);
-	}
-
-	/**
-	 * Query scope which extracts a certain node object from the current query
-	 * expression.
-	 *
-	 * @param Builder $query
-	 * @param Node $node
-	 * @return Builder
-	 * @throws \InvalidArgumentException
-	 */
-	public function scopeWithoutNode(Builder $query, Node $node): Builder
-	{
-		return $query->where($node->getKeyName(), '!=', $node->getKey());
-	}
-
-	/**
-	 * Extracts current node (self) from current query expression.
-	 *
-	 * @param Builder $query
-	 * @return Builder
-	 * @throws \InvalidArgumentException
-	 */
-	public function scopeWithoutSelf(Builder $query): Builder
-	{
-		return $this->scopeWithoutNode($query, $this);
-	}
-
-	/**
-	 * Extracts first root (from the current node p-o-v) from current query
-	 * expression.
-	 *
-	 * @param Builder $query
-	 * @return Builder
-	 * @throws \InvalidArgumentException
-	 */
-	public function scopeWithoutRoot(Builder $query): Builder
-	{
-		return $this->scopeWithoutNode($query, $this->getRoot());
-	}
-
-	/**
-	 * Provides a depth level limit for the query.
-	 *
-	 * @param Builder $query
-	 * @param int $limit
-	 * @return Builder
-	 */
-	public function scopeLimitDepth(Builder $query, int $limit): Builder
-	{
-		$depth = $this->exists ? $this->getDepth() : $this->getLevel();
-		$max = $depth + $limit;
-		$scopes = [$depth, $max];
-
-		return $query->whereBetween($this->getDepthColumnName(), [min($scopes), max($scopes)]);
-	}
-
-	/**
-	 * Returns true if this is a root node.
-	 *
-	 * @return bool
-	 */
-	public function isRoot(): bool
-	{
-		return null === $this->getParentId();
-	}
-
-	/**
-	 * Returns true if this is a leaf node (end of a branch).
-	 *
-	 * @return bool
-	 */
-	public function isLeaf(): bool
-	{
-		return $this->exists && ($this->getRight() - $this->getLeft() === 1);
-	}
-
-	/**
-	 * Returns true if this is a trunk node (not root or leaf).
-	 *
-	 * @return bool
-	 */
-	public function isTrunk(): bool
-	{
-		return !$this->isRoot() && !$this->isLeaf();
-	}
-
-	/**
-	 * Returns true if this is a child node.
-	 *
-	 * @return bool
-	 */
-	public function isChild(): bool
-	{
-		return !$this->isRoot();
+		return (new static())->makeTree($nodeList);
 	}
 
 	/**
@@ -537,28 +403,11 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 
 		$parentId = $this->getParentId();
 
-		if (
-			null !== $parentId &&
-			$currentParent = static::find($parentId)
-		) {
+		if (null !== $parentId && $currentParent = static::find($parentId)) {
 			return $currentParent->getRoot();
 		}
 
 		return $this;
-	}
-
-	/**
-	 * Instance scope which targes all the ancestor chain nodes including
-	 * the current one.
-	 *
-	 * @param Builder $query
-	 * @return Builder
-	 */
-	public function scopeAncestorsAndSelf(Builder $query): Builder
-	{
-		return $query
-			->where($this->getLeftColumnName(), '<=', $this->getLeft())
-			->where($this->getRightColumnName(), '>=', $this->getRight());
 	}
 
 	/**
@@ -586,18 +435,6 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	}
 
 	/**
-	 * Instance scope which targets all the ancestor chain nodes excluding
-	 * the current one.
-	 *
-	 * @param Builder $query
-	 * @return Builder
-	 */
-	public function scopeAncestors(Builder $query): Builder
-	{
-		return $query->ancestorsAndSelf()->withoutSelf();
-	}
-
-	/**
 	 * Get all the ancestor chain from the database excluding the current node.
 	 *
 	 * @param array $columns
@@ -615,22 +452,11 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 *
 	 * @param array $columns
 	 *
-	 * @return \Illuminate\Database\Eloquent\Collection|\Baum\Node[]
+	 * @return \Baum\Extensions\Eloquent\Collection|\Baum\Node[]
 	 */
 	public function getAncestorsWithoutRoot($columns = ['*']): Collection
 	{
 		return $this->ancestors()->withoutRoot()->get($columns);
-	}
-
-	/**
-	 * Instance scope which targets all children of the parent, including self.
-	 *
-	 * @param Builder $query
-	 * @return Builder
-	 */
-	public function scopeSiblingsAndSelf(Builder $query): Builder
-	{
-		return $query->where($this->getParentColumnName(), $this->getParentId());
 	}
 
 	/**
@@ -643,17 +469,6 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	public function getSiblingsAndSelf($columns = ['*']): Collection
 	{
 		return $this->siblingsAndSelf()->get($columns);
-	}
-
-	/**
-	 * Instance scope targeting all children of the parent, except self.
-	 *
-	 * @param Builder $query
-	 * @return Builder
-	 */
-	public function scopeSiblings(Builder $query): Builder
-	{
-		return $query->siblingsAndSelf()->withoutSelf();
 	}
 
 	/**
@@ -693,24 +508,13 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	}
 
 	/**
-	 * Scope targeting itself and all of its nested children.
-	 *
-	 * @param Builder $query
-	 * @return Builder
-	 */
-	public function scopeDescendantsAndSelf(Builder $query): Builder
-	{
-		return $query
-			->where($this->getLeftColumnName(), '>=', $this->getLeft())
-			->where($this->getLeftColumnName(), '<', $this->getRight());
-	}
-
-	/**
 	 * Retrieve all nested children an self.
 	 *
 	 * @param array $columns
+	 * or int $limit[, array $columns = ['*']]
 	 *
 	 * @return \Baum\Extensions\Eloquent\Collection|\Baum\Node[]
+	 * @TODO refactor and remove the magic limit
 	 */
 	public function getDescendantsAndSelf($columns = ['*']): Collection
 	{
@@ -738,22 +542,13 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	}
 
 	/**
-	 * Set of all children & nested children.
-	 *
-	 * @param Builder $query
-	 * @return Builder
-	 */
-	public function scopeDescendants(Builder $query): Builder
-	{
-		return $query->descendantsAndSelf()->withoutSelf();
-	}
-
-	/**
 	 * Retrieve all of its children & nested children.
 	 *
 	 * @param array $columns
+	 * or int $limit[, array $columns = ['*']]
 	 *
 	 * @return \Baum\Extensions\Eloquent\Collection|\Baum\Node[]
+	 * @TODO refactor and remove the magic limit
 	 */
 	public function getDescendants($columns = ['*']): Collection
 	{
@@ -770,17 +565,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	}
 
 	/**
-	 * Set of "immediate" descendants (aka children), alias for the children relation.
-	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
-	 */
-	public function immediateDescendants(): HasMany
-	{
-		return $this->children();
-	}
-
-	/**
-	 * Retrive all of its "immediate" descendants.
+	 * Retrieve all of its "immediate" descendants.
 	 *
 	 * @param array $columns
 	 *
@@ -792,26 +577,11 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	}
 
 	/**
-	 * Returns the level of this node in the tree.
-	 * Root level is 0.
-	 *
-	 * @return int
-	 */
-	public function getLevel(): int
-	{
-		if (null === $this->getParentId()) {
-			return 0;
-		}
-
-		return $this->computeLevel();
-	}
-
-	/**
 	 * Returns the first sibling to the left.
 	 *
-	 * @return Node
+	 * @return Node|null
 	 */
-	public function getLeftSibling(): Node
+	public function getLeftSibling(): ?Node
 	{
 		return $this->siblings()
 			->where($this->getLeftColumnName(), '<', $this->getLeft())
@@ -823,9 +593,9 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	/**
 	 * Returns the first sibling to the right.
 	 *
-	 * @return Node
+	 * @return Node|null
 	 */
-	public function getRightSibling(): Node
+	public function getRightSibling(): ?Node
 	{
 		return $this->siblings()
 			->where($this->getLeftColumnName(), '>', $this->getLeft())
@@ -836,6 +606,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 * Find the left sibling and move to left of it.
 	 *
 	 * @return Node
+	 * @throws \Throwable
 	 */
 	public function moveLeft(): Node
 	{
@@ -846,6 +617,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 * Find the right sibling and move to the right of it.
 	 *
 	 * @return Node
+	 * @throws \Throwable
 	 */
 	public function moveRight(): Node
 	{
@@ -857,6 +629,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 *
 	 * @param Node|int $node
 	 * @return Node
+	 * @throws \Throwable
 	 */
 	public function moveToLeftOf($node): Node
 	{
@@ -868,6 +641,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 *
 	 * @param Node|int $node
 	 * @return Node
+	 * @throws \Throwable
 	 */
 	public function moveToRightOf($node): Node
 	{
@@ -879,6 +653,8 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 *
 	 * @param Node|int $node
 	 * @return Node
+	 * @throws \Throwable
+	 * @see Node::moveToRightOf()
 	 */
 	public function makeNextSiblingOf($node): Node
 	{
@@ -890,6 +666,8 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 *
 	 * @param Node|int $node
 	 * @return Node
+	 * @throws \Throwable
+	 * @see Node::moveToRightOf()
 	 */
 	public function makeSiblingOf($node): Node
 	{
@@ -901,6 +679,8 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 *
 	 * @param Node|int $node
 	 * @return Node
+	 * @throws \Throwable
+	 * @see Node::moveToLeftOf()
 	 */
 	public function makePreviousSiblingOf($node): Node
 	{
@@ -912,6 +692,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 *
 	 * @param Node|int $node
 	 * @return Node
+	 * @throws \Throwable
 	 */
 	public function makeChildOf($node): Node
 	{
@@ -923,6 +704,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 *
 	 * @param Node $node
 	 * @return Node
+	 * @throws \Throwable
 	 */
 	public function makeFirstChildOf(Node $node): Node
 	{
@@ -938,6 +720,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 *
 	 * @param Node $node
 	 * @return Node
+	 * @throws \Throwable
 	 */
 	public function makeLastChildOf(Node $node): Node
 	{
@@ -948,6 +731,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 * Make current node a root node.
 	 *
 	 * @return Node
+	 * @throws \Throwable
 	 */
 	public function makeRoot(): Node
 	{
@@ -961,22 +745,20 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 */
 	public function setDefaultLeftAndRight(): void
 	{
-		/**
-		 * @var Node $withHighestRight
-		 */
+		/** @var Node $withHighestRight */
 		$withHighestRight = $this->newNestedSetQuery()
 			->reOrderBy($this->getRightColumnName(), 'desc')
 			->take(1)
 			->sharedLock()
 			->first();
 
-		$maxRgt = 0;
+		$maxRight = 0;
 		if (null !== $withHighestRight) {
-			$maxRgt = $withHighestRight->getRight();
+			$maxRight = $withHighestRight->getRight();
 		}
 
-		$this->setAttribute($this->getLeftColumnName(), $maxRgt + 1);
-		$this->setAttribute($this->getRightColumnName(), $maxRgt + 2);
+		$this->setAttribute($this->getLeftColumnName(), $maxRight + 1);
+		$this->setAttribute($this->getRightColumnName(), $maxRight + 2);
 	}
 
 	/**
@@ -987,12 +769,9 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 */
 	public function storeNewParent(): void
 	{
-		static::$moveToNewParentId = false;
-		if ((
-				$this->exists ||
-				!$this->isRoot()
-			) &&
-			$this->isDirty($this->getParentColumnName())
+		static::$moveToNewParentId = null;
+		if (($this->exists || !$this->isRoot())
+			&& $this->isDirty($this->getParentColumnName())
 		) {
 			static::$moveToNewParentId = $this->getParentId();
 		}
@@ -1001,23 +780,23 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	/**
 	 * Move to the new parent if appropiate.
 	 *
-	 * @return void
+	 * @return Node
+	 * @throws \Throwable
 	 */
-	public function moveToNewParent(): void
+	public function moveToNewParent(): Node
 	{
 		$pid = static::$moveToNewParentId;
-
-		if (null === $pid) {
-			$this->makeRoot();
-		} elseif ($pid !== false) {
-			$this->makeChildOf($pid);
+		if ($pid === null) {
+			return $this->makeRoot();
 		}
+
+		return $this->makeChildOf($pid);
 	}
 
 	/**
 	 * Sets the depth attribute.
 	 *
-	 * @return \Baum\Node
+	 * @return Node
 	 * @throws \Throwable
 	 */
 	public function setDepth(): self
@@ -1040,7 +819,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	/**
 	 * Sets the depth attribute for the current node and all of its descendants.
 	 *
-	 * @return \Baum\Node
+	 * @return Node
 	 * @throws \Throwable
 	 */
 	public function setDepthWithSubtree(): self
@@ -1055,8 +834,9 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 			$oldDepth = $self->getDepth() ?: 0;
 			$newDepth = $self->getLevel();
 
-			$self->newNestedSetQuery()->where($self->getKeyName(), '=',
-				$self->getKey())->update([$self->getDepthColumnName() => $newDepth]);
+			$self->newNestedSetQuery()
+				->where($self->getKeyName(), '=', $self->getKey())
+				->update([$self->getDepthColumnName() => $newDepth]);
 			$self->setAttribute($self->getDepthColumnName(), $newDepth);
 
 			$diff = $newDepth - $oldDepth;
@@ -1077,10 +857,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 */
 	public function destroyDescendants(): void
 	{
-		if (
-			null === $this->getRight() ||
-			null === $this->getLeft()
-		) {
+		if ($this->getRight() === null || $this->getLeft() === null) {
 			return;
 		}
 
@@ -1089,22 +866,31 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 		$this->getConnection()->transaction(function () use ($self) {
 			$self->reload();
 
-			$lftCol = $self->getLeftColumnName();
-			$rgtCol = $self->getRightColumnName();
-			$lft = $self->getLeft();
-			$rgt = $self->getRight();
+			$leftColumnName = $self->getLeftColumnName();
+			$rightColumnName = $self->getRightColumnName();
+			$left = $self->getLeft();
+			$right = $self->getRight();
 
 			// Apply a lock to the rows which fall past the deletion point
-			$self->newNestedSetQuery()->where($lftCol, '>=', $lft)->select($self->getKeyName())->lockForUpdate()->get();
+			$self->newNestedSetQuery()
+				->where($leftColumnName, '>=', $left)
+				->select($self->getKeyName())
+				->lockForUpdate()
+				->get();
 
 			// Prune children
-			$self->newNestedSetQuery()->where($lftCol, '>', $lft)->where($rgtCol, '<', $rgt)->delete();
+			$self->newNestedSetQuery()
+				->where($leftColumnName, '>', $left)
+				->where($rightColumnName, '<', $right)
+				->delete();
 
 			// Update left and right indexes for the remaining nodes
-			$diff = $rgt - $lft + 1;
+			$diff = $right - $left + 1;
 
-			$self->newNestedSetQuery()->where($lftCol, '>', $rgt)->decrement($lftCol, $diff);
-			$self->newNestedSetQuery()->where($rgtCol, '>', $rgt)->decrement($rgtCol, $diff);
+			$self->newNestedSetQuery()->where($leftColumnName, '>', $right)
+				->decrement($leftColumnName, $diff);
+			$self->newNestedSetQuery()->where($rightColumnName, '>', $right)
+				->decrement($rightColumnName, $diff);
 		});
 	}
 
@@ -1116,25 +902,24 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 */
 	public function shiftSiblingsForRestore(): void
 	{
-		if (
-			null === $this->getRight() ||
-			null === $this->getLeft()
-		) {
+		if ($this->getRight() === null || $this->getLeft() === null) {
 			return;
 		}
 
 		$self = $this;
 
 		$this->getConnection()->transaction(function () use ($self) {
-			$lftCol = $self->getLeftColumnName();
-			$rgtCol = $self->getRightColumnName();
-			$lft = $self->getLeft();
-			$rgt = $self->getRight();
+			$leftColumnName = $self->getLeftColumnName();
+			$rightColumnName = $self->getRightColumnName();
+			$left = $self->getLeft();
+			$right = $self->getRight();
 
-			$diff = $rgt - $lft + 1;
+			$diff = $right - $left + 1;
 
-			$self->newNestedSetQuery()->where($lftCol, '>=', $lft)->increment($lftCol, $diff);
-			$self->newNestedSetQuery()->where($rgtCol, '>=', $lft)->increment($rgtCol, $diff);
+			$self->newNestedSetQuery()->where($leftColumnName, '>=', $left)
+				->increment($leftColumnName, $diff);
+			$self->newNestedSetQuery()->where($rightColumnName, '>=', $left)
+				->increment($rightColumnName, $diff);
 		});
 	}
 
@@ -1147,10 +932,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 */
 	public function restoreDescendants(): void
 	{
-		if (
-			null === $this->getRight() ||
-			null === $this->getLeft()
-		) {
+		if ($this->getRight() === null || $this->getLeft() === null) {
 			return;
 		}
 
@@ -1190,11 +972,14 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 
 		$nodes = $instance->newNestedSetQuery()->get()->toArray();
 
-		return array_combine(array_map(function ($node) use ($key) {
-			return $node[$key];
-		}, $nodes), array_map(function ($node) use ($separator, $depthColumn, $column, $symbol) {
-			return str_repeat($separator, $node[$depthColumn]) . $symbol . $node[$column];
-		}, $nodes));
+		return array_combine(
+			array_map(function ($node) use ($key) {
+				return $node[$key];
+			}, $nodes),
+			array_map(function ($node) use ($separator, $depthColumn, $column, $symbol) {
+				return str_repeat($separator, $node[$depthColumn]) . $symbol . $node[$column];
+			}, $nodes)
+		);
 	}
 
 	/**
@@ -1207,9 +992,7 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 	 */
 	public function makeTree($nodeList)
 	{
-		$mapper = new SetMapper($this);
-
-		return $mapper->map($nodeList);
+		return (new SetMapper($this))->map($nodeList);
 	}
 
 	/**

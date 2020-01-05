@@ -195,7 +195,7 @@ class Move
 	 */
 	protected function resolveNode($node)
 	{
-		if ($node instanceof \Baum\Node) {
+		if ($node instanceof Node) {
 			return $node->reload();
 		}
 
