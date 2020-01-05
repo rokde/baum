@@ -1,45 +1,13 @@
-**Development is ongoing - modernization of package is in progress** 
+# Baum 
 
-# Baum <a href="https://travis-ci.org/dogadogmbh/baum"><img src="https://travis-ci.org/dogadogmbh/baum.svg?branch=master"></a> [![Coverage Status](https://coveralls.io/repos/github/dogadogmbh/baum/badge.svg?branch=master)](https://coveralls.io/github/dogadogmbh/baum?branch=master)
+[![Latest Stable Version](https://poser.pugx.org/rokde/baum/v/stable.svg)](https://packagist.org/packages/rokde/baum) [![Latest Unstable Version](https://poser.pugx.org/rokde/baum/v/unstable.svg)](https://packagist.org/packages/rokde/baum) [![License](https://poser.pugx.org/rokde/baum/license.svg)](https://packagist.org/packages/rokde/baum) [![Total Downloads](https://poser.pugx.org/rokde/baum/downloads.svg)](https://packagist.org/packages/rokde/baum) [![Building](https://api.travis-ci.org/rokde/baum.svg?branch=master)](https://travis-ci.org/rokde/baum)
 
-## Forked from [gazsp/baum](https://github.com/gazsp/baum) - Fixed a critical bug with wrong database transaction.
-
-**Fixed a bug that destroys the nested set when multiple `INSERT` or `DELETE` operations are running at the same time.** 
-
-It's really difficult to describe and to reproduce, but operations that require to rebuild the tree can run into an error when doing it at the same time.
-
-Before bugfixing only the rebuilding of the tree was inside a transaction.
-The actual operation e.g. `INSERT` or `DELETE` a node is not inside.
-
-Suppose that one node is deleted, the rebuild in progress...
-Then nearly exactly at same time a second node is deleted and the second rebuild stops because of table locks.
-After the tree is broken.
-
-**Error**
-
-The application log shows following errors. 
-
-```bash
-SQLSTATE[40001]: Serialization failure: 1213 Deadlock found when trying to get lock; try restarting transaction
-```
-
-```bash
-SQLSTATE[HY000]: General error: 2014 Cannot execute queries while other unbuffered queries are active.  Consider using PDOStatement::fetchAll().  Alternatively, if your code is only ever going to run against mysql, you may enable query buffering by setting the PDO::MYSQL_ATTR_USE_BUFFERED_QUERY attribute.
-```
-
-**Solution**
-
-We fixed it with starting a new further transaction earlier. Before writing to database at the first time. We also have to commit that transactions later. Therefore we overrid the methods `delete` and `finishSave` in the class `Node`.
-
-
-## Forked from [etrepat/baum](https://github.com/etrepat/baum) - Continuing development and fixing failing unit tests on Laravel 5.x
+Merged the work of [gazsp/baum](https://github.com/gazsp/baum), [dogadogmbh/baum](https://github.com/dogadogmbh/baum) and the original [etrepat/baum](https://github.com/etrepat/baum) and take it to the current php and laravel versions.
 
 **If you find a bug, please file an issue and submit a pull request with a failing unit test**
 
 Baum is an implementation of the [Nested Set](http://en.wikipedia.org/wiki/Nested_set_model)
-pattern for [Laravel 5's](http://laravel.com/) Eloquent ORM.
-
-For **Laravel 4.2.x compatibility**, check the [1.0.x branch](https://github.com/etrepat/baum/tree/1.0.x-stable) branch or use the latest [1.0.x tagged release](https://github.com/etrepat/baum/releases).
+pattern for [Laravels](http://laravel.com/) Eloquent ORM.
 
 ## Documentation
 
