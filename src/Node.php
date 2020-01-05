@@ -294,8 +294,8 @@ abstract class Node extends \Baum\Extensions\Eloquent\Model
 		$builder = $this->newQuery()->orderBy($this->getQualifiedOrderColumnName());
 
 		if ($this->isScoped()) {
-			foreach ($this->scoped as $scopeFld) {
-				$builder->where($scopeFld, $this->$scopeFld);
+			foreach ($this->scoped as $scopeField) {
+				$builder->where($scopeField, $this->$scopeField);
 			}
 		}
 
