@@ -311,8 +311,9 @@ class ClusterHierarchyTest extends ClusterTestCase
             $this->clusters('Child 1'),
             $this->clusters('Child 2'),
             $this->clusters('Child 2.1'),
-            $this->clusters('Child 2.1.1'),
+            //$this->clusters('Child 2.1.1'),
             $this->clusters('Child 3'),
+            $this->clusters('Child 2.1.1'),//
         ], $parent->getDescendantsAndSelf(3)->all());
 
         $this->assertEquals([
@@ -320,9 +321,10 @@ class ClusterHierarchyTest extends ClusterTestCase
             $this->clusters('Child 1'),
             $this->clusters('Child 2'),
             $this->clusters('Child 2.1'),
+            $this->clusters('Child 3'),//
             $this->clusters('Child 2.1.1'),
             $this->clusters('Child 2.1.1.1'),
-            $this->clusters('Child 3'),
+            //$this->clusters('Child 3'),
         ], $parent->getDescendantsAndSelf(4)->all());
 
         $this->assertEquals([
@@ -330,10 +332,11 @@ class ClusterHierarchyTest extends ClusterTestCase
             $this->clusters('Child 1'),
             $this->clusters('Child 2'),
             $this->clusters('Child 2.1'),
+            $this->clusters('Child 3'),//
             $this->clusters('Child 2.1.1'),
             $this->clusters('Child 2.1.1.1'),
             $this->clusters('Child 2.1.1.1.1'),
-            $this->clusters('Child 3'),
+            //$this->clusters('Child 3'),
         ], $parent->getDescendantsAndSelf(10)->all());
     }
 
