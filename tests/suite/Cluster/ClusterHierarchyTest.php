@@ -48,9 +48,9 @@ class ClusterHierarchyTest extends ClusterTestCase
         $this->assertEquals(Cluster::root(), $this->clusters('Root 1'));
     }
 
-    public function testLeavesStatic()
+    public function testAllLeavesStatic()
     {
-        $allLeaves = Cluster::leaves()->get();
+        $allLeaves = Cluster::allLeaves()->get();
 
         $this->assertCount(4, $allLeaves);
 
@@ -62,9 +62,9 @@ class ClusterHierarchyTest extends ClusterTestCase
         $this->assertContains('Root 2', $leaves);
     }
 
-    public function testTrunksStatic()
+    public function testAllTrunksStatic()
     {
-        $allTrunks = Cluster::trunks()->get();
+        $allTrunks = Cluster::allTrunks()->get();
 
         $this->assertCount(1, $allTrunks);
 
