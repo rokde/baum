@@ -201,6 +201,8 @@ abstract class Node extends Model
             $this->getConnection()->commit();
         }
 
+        $this->exists = false;
+
         return $return;
     }
 
