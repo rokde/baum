@@ -296,6 +296,7 @@ abstract class Node extends Model
      * Set of "immediate" descendants (aka children), alias for the children relation.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @see self::children()
      */
     public function immediateDescendants(): HasMany
     {
@@ -421,7 +422,9 @@ abstract class Node extends Model
      */
     public function getAncestorsAndSelf(array $columns = ['*']): Collection
     {
-        return $this->scoped()->ancestorsAndSelf()->get($columns);
+        return $this->scoped()->ancestorsAndSelf()
+            ->orderBy($this->getOrderColumnName())
+            ->get($columns);
     }
 
     /**
@@ -434,7 +437,9 @@ abstract class Node extends Model
      */
     public function getAncestorsAndSelfWithoutRoot($columns = ['*']): Collection
     {
-        return $this->scoped()->ancestorsAndSelf()->withoutRoot()->get($columns);
+        return $this->scoped()->ancestorsAndSelf()->withoutRoot()
+            ->orderBy($this->getOrderColumnName())
+            ->get($columns);
     }
 
     /**
@@ -446,7 +451,9 @@ abstract class Node extends Model
      */
     public function getAncestors($columns = ['*']): Collection
     {
-        return $this->scoped()->ancestors()->get($columns);
+        return $this->scoped()->ancestors()
+            ->orderBy($this->getOrderColumnName())
+            ->get($columns);
     }
 
     /**
@@ -459,7 +466,9 @@ abstract class Node extends Model
      */
     public function getAncestorsWithoutRoot($columns = ['*']): Collection
     {
-        return $this->scoped()->ancestors()->withoutRoot()->get($columns);
+        return $this->scoped()->ancestors()->withoutRoot()
+            ->orderBy($this->getOrderColumnName())
+            ->get($columns);
     }
 
     /**
@@ -471,7 +480,9 @@ abstract class Node extends Model
      */
     public function getSiblingsAndSelf($columns = ['*']): Collection
     {
-        return $this->scoped()->siblingsAndSelf()->get($columns);
+        return $this->scoped()->siblingsAndSelf()
+            ->orderBy($this->getOrderColumnName())
+            ->get($columns);
     }
 
     /**
@@ -483,7 +494,9 @@ abstract class Node extends Model
      */
     public function getSiblings($columns = ['*']): Collection
     {
-        return $this->siblings()->get($columns);
+        return $this->siblings()
+            ->orderBy($this->getOrderColumnName())
+            ->get($columns);
     }
 
     /**
@@ -495,7 +508,9 @@ abstract class Node extends Model
      */
     public function getLeaves($columns = ['*']): Collection
     {
-        return $this->scoped()->leaves()->get($columns);
+        return $this->scoped()->leaves()
+            ->orderBy($this->getOrderColumnName())
+            ->get($columns);
     }
 
     /**
@@ -507,7 +522,9 @@ abstract class Node extends Model
      */
     public function getTrunks($columns = ['*']): Collection
     {
-        return $this->scoped()->trunks()->get($columns);
+        return $this->scoped()->trunks()
+            ->orderBy($this->getOrderColumnName())
+            ->get($columns);
     }
 
     /**
