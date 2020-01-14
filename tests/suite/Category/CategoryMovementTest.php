@@ -88,7 +88,6 @@ class CategoryMovementTest extends CategoryTestCase
         $this->assertEquals(2, $this->categories('Child 2.1')->getDepth());
     }
 
-    /** @TODO inspect failures */
     public function testMoveRight()
     {
         $this->categories('Child 2')->moveRight();
@@ -133,7 +132,6 @@ class CategoryMovementTest extends CategoryTestCase
         $this->assertEquals(2, $this->categories('Child 2.1')->getDepth());
     }
 
-    /** @TODO inspect failures */
     public function testMoveToRightOf()
     {
         $this->categories('Child 1')->moveToRightOf($this->categories('Child 3'));
