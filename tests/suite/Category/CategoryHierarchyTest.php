@@ -318,9 +318,8 @@ class CategoryHierarchyTest extends CategoryTestCase
             $this->categories('Child 1'),
             $this->categories('Child 2'),
             $this->categories('Child 2.1'),
-            $this->categories('Child 3'),//
             $this->categories('Child 2.1.1'),
-            //$this->categories('Child 3'),
+            $this->categories('Child 3'),
         ], $parent->getDescendantsAndSelf(3)->all());
 
         $this->assertEquals([
@@ -328,10 +327,9 @@ class CategoryHierarchyTest extends CategoryTestCase
             $this->categories('Child 1'),
             $this->categories('Child 2'),
             $this->categories('Child 2.1'),
-            $this->categories('Child 3'),//
             $this->categories('Child 2.1.1'),
             $this->categories('Child 2.1.1.1'),
-            //$this->categories('Child 3'),
+            $this->categories('Child 3'),
         ], $parent->getDescendantsAndSelf(4)->all());
 
         $this->assertEquals([
@@ -339,11 +337,10 @@ class CategoryHierarchyTest extends CategoryTestCase
             $this->categories('Child 1'),
             $this->categories('Child 2'),
             $this->categories('Child 2.1'),
-            $this->categories('Child 3'),//
             $this->categories('Child 2.1.1'),
             $this->categories('Child 2.1.1.1'),
             $this->categories('Child 2.1.1.1.1'),
-            //$this->categories('Child 3'),
+            $this->categories('Child 3'),
         ], $parent->getDescendantsAndSelf(10)->all());
     }
 
@@ -389,41 +386,37 @@ class CategoryHierarchyTest extends CategoryTestCase
             $this->categories('Child 1'),
             $this->categories('Child 2'),
             $this->categories('Child 2.1'),
-            $this->categories('Child 3'),//
             $this->categories('Child 2.1.1'),
-            //$this->categories('Child 3'),
+            $this->categories('Child 3'),
         ], $parent->getDescendants(3)->all());
 
         $this->assertEquals([
             $this->categories('Child 1'),
             $this->categories('Child 2'),
             $this->categories('Child 2.1'),
-            $this->categories('Child 3'),//
             $this->categories('Child 2.1.1'),
             $this->categories('Child 2.1.1.1'),
-            //$this->categories('Child 3'),
+            $this->categories('Child 3'),
         ], $parent->getDescendants(4)->all());
 
         $this->assertEquals([
             $this->categories('Child 1'),
             $this->categories('Child 2'),
             $this->categories('Child 2.1'),
-            $this->categories('Child 3'),//
             $this->categories('Child 2.1.1'),
             $this->categories('Child 2.1.1.1'),
             $this->categories('Child 2.1.1.1.1'),
-            //$this->categories('Child 3'),
+            $this->categories('Child 3'),
         ], $parent->getDescendants(5)->all());
 
         $this->assertEquals([
             $this->categories('Child 1'),
             $this->categories('Child 2'),
             $this->categories('Child 2.1'),
-            $this->categories('Child 3'),//
             $this->categories('Child 2.1.1'),
             $this->categories('Child 2.1.1.1'),
             $this->categories('Child 2.1.1.1.1'),
-            //$this->categories('Child 3'),
+            $this->categories('Child 3'),
         ], $parent->getDescendants(10)->all());
     }
 
@@ -522,8 +515,7 @@ class CategoryHierarchyTest extends CategoryTestCase
     public function testGetLeftSibling()
     {
         $this->assertEquals($this->categories('Child 1'), $this->categories('Child 2')->getLeftSibling());
-        // $this->assertEquals($this->categories('Child 2'), $this->categories('Child 3')->getLeftSibling());
-        $this->assertEquals($this->categories('Child 1'), $this->categories('Child 3')->getLeftSibling());//
+        $this->assertEquals($this->categories('Child 2'), $this->categories('Child 3')->getLeftSibling());
     }
 
     public function testGetLeftSiblingOfFirstRootIsNull()
@@ -762,10 +754,9 @@ class CategoryHierarchyTest extends CategoryTestCase
 
         $expectedSubtreeZ = [
             'Root Z' => [
-//				'Child A' => null,
+				'Child A' => null,
                 'Child C' => null,
                 'Child G' => ['Child G.1' => null],
-                'Child A' => null,//
             ],
         ];
         $this->assertArraysAreEqual($expectedSubtreeZ,
