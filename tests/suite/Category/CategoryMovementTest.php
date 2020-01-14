@@ -94,8 +94,7 @@ class CategoryMovementTest extends CategoryTestCase
         $this->categories('Child 2')->moveRight();
 
         $this->assertNull($this->categories('Child 2')->getRightSibling());
-        //$this->assertEquals($this->categories('Child 3'), $this->categories('Child 2')->getLeftSibling());
-        $this->assertEquals($this->categories('Child 1'), $this->categories('Child 2')->getLeftSibling());//
+        $this->assertEquals($this->categories('Child 3'), $this->categories('Child 2')->getLeftSibling());
         $this->assertTrue(Category::isValidNestedSet());
     }
 
@@ -141,8 +140,7 @@ class CategoryMovementTest extends CategoryTestCase
 
         $this->assertNull($this->categories('Child 1')->getRightSibling());
 
-        //$this->assertEquals($this->categories('Child 3'), $this->categories('Child 1')->getLeftSibling());
-        $this->assertEquals($this->categories('Child 2'), $this->categories('Child 1')->getLeftSibling());//
+        $this->assertEquals($this->categories('Child 3'), $this->categories('Child 1')->getLeftSibling());
 
         $this->assertTrue(Category::isValidNestedSet());
     }
