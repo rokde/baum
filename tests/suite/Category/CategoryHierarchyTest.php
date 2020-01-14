@@ -289,7 +289,6 @@ class CategoryHierarchyTest extends CategoryTestCase
         $this->assertEquals($expected, $parent->getDescendantsAndSelf()->all());
     }
 
-    /** @TODO inspect failures */
     public function testGetDescendantsAndSelfWithLimit()
     {
         (new CategorySeeder())->nestUptoAt($this->categories('Child 2.1'), 3);
@@ -360,7 +359,6 @@ class CategoryHierarchyTest extends CategoryTestCase
         $this->assertEquals($expected, $parent->getDescendants()->all());
     }
 
-    /** @TODO inspect failures */
     public function testGetDescendantsWithLimit()
     {
         with(new CategorySeeder())->nestUptoAt($this->categories('Child 2.1'), 3);
@@ -511,7 +509,6 @@ class CategoryHierarchyTest extends CategoryTestCase
         $this->assertEquals($expected, $child->getSiblings()->all());
     }
 
-    /** @TODO inspect failures */
     public function testGetLeftSibling()
     {
         $this->assertEquals($this->categories('Child 1'), $this->categories('Child 2')->getLeftSibling());
@@ -736,7 +733,6 @@ class CategoryHierarchyTest extends CategoryTestCase
         $this->assertArraysAreEqual($expected, hmap($parent->getDescendantsAndSelf()->toHierarchy()->toArray()));
     }
 
-    /** @TODO inspect failures */
     public function testToHierarchyNestsCorrectlyWithOrder()
     {
         with(new OrderedCategorySeeder())->run();
@@ -765,16 +761,16 @@ class CategoryHierarchyTest extends CategoryTestCase
 
     public function testGetNestedList()
     {
-        $seperator = ' ';
-        $nestedList = Category::getNestedList('name', 'id', $seperator);
+        $separator = ' ';
+        $nestedList = Category::getNestedList('name', 'id', $separator);
 
         $expected = [
-            1 => str_repeat($seperator, 0) . 'Root 1',
-            2 => str_repeat($seperator, 1) . 'Child 1',
-            3 => str_repeat($seperator, 1) . 'Child 2',
-            4 => str_repeat($seperator, 2) . 'Child 2.1',
-            5 => str_repeat($seperator, 1) . 'Child 3',
-            6 => str_repeat($seperator, 0) . 'Root 2',
+            1 => str_repeat($separator, 0) . 'Root 1',
+            2 => str_repeat($separator, 1) . 'Child 1',
+            3 => str_repeat($separator, 1) . 'Child 2',
+            4 => str_repeat($separator, 2) . 'Child 2.1',
+            5 => str_repeat($separator, 1) . 'Child 3',
+            6 => str_repeat($separator, 0) . 'Root 2',
         ];
 
         $this->assertArraysAreEqual($expected, $nestedList);
