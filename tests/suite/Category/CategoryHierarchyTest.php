@@ -754,7 +754,7 @@ class CategoryHierarchyTest extends CategoryTestCase
 
         $expectedSubtreeZ = [
             'Root Z' => [
-				'Child A' => null,
+                'Child A' => null,
                 'Child C' => null,
                 'Child G' => ['Child G.1' => null],
             ],
