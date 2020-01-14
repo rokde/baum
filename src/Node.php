@@ -522,14 +522,18 @@ abstract class Node extends Model
     public function getDescendantsAndSelf($columns = ['*']): Collection
     {
         if (is_array($columns)) {
-            return $this->scoped()->descendantsAndSelf()->get($columns);
+            return $this->scoped()->descendantsAndSelf()
+                ->orderBy($this->getOrderColumnName())
+                ->get($columns);
         }
 
         $arguments = func_get_args();
         $limit = intval(array_shift($arguments));
         $columns = array_shift($arguments) ?: ['*'];
 
-        return $this->scoped()->descendantsAndSelf()->limitDepth($limit)->get($columns);
+        return $this->scoped()->descendantsAndSelf()->limitDepth($limit)
+            ->orderBy($this->getOrderColumnName())
+            ->get($columns);
     }
 
     /**
@@ -556,7 +560,9 @@ abstract class Node extends Model
     public function getDescendants($columns = ['*']): Collection
     {
         if (is_array($columns)) {
-            return $this->scoped()->descendants()->get($columns);
+            return $this->scoped()->descendants()
+                ->orderBy($this->getOrderColumnName())
+                ->get($columns);
         }
 
         $arguments = func_get_args();
@@ -564,7 +570,9 @@ abstract class Node extends Model
         $limit = intval(array_shift($arguments));
         $columns = array_shift($arguments) ?: ['*'];
 
-        return $this->scoped()->descendants()->limitDepth($limit)->get($columns);
+        return $this->scoped()->descendants()->limitDepth($limit)
+            ->orderBy($this->getOrderColumnName())
+            ->get($columns);
     }
 
     /**
@@ -589,8 +597,7 @@ abstract class Node extends Model
         return $this->scoped()->siblings()
             ->where($this->getLeftColumnName(), '<', $this->getLeft())
             ->orderBy($this->getOrderColumnName(), 'desc')
-            ->get()
-            ->last();
+            ->first();
     }
 
     /**
@@ -602,6 +609,7 @@ abstract class Node extends Model
     {
         return $this->scoped()->siblings()
             ->where($this->getLeftColumnName(), '>', $this->getLeft())
+            ->orderBy($this->getOrderColumnName(), 'asc')
             ->first();
     }
 
