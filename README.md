@@ -97,18 +97,13 @@ ordinary trees are suddenly quite fast. Nifty, isn't it?
 <a name="installation"></a>
 ## Installation
 
-Baum works with Laravel 5 onwards. You can add it to your `composer.json` file
-with:
+Baum works with Laravel. You can add it to your `composer.json` file with:
 
-    "dogado/baum": ">=1.3.0"
+    "rokde/baum": "^2.0"
 
 Run `composer install` to install it.
 
-As with most Laravel 5 packages you'll then need to register the Baum
-*service provider*. To do that, head over your `config/app.php` file and add
-the following line into the `providers` array:
-
-    'Baum\Providers\BaumServiceProvider',
+The package uses laravel auto-discovery, so you are good to go.
 
 <a name="getting-started"></a>
 ## Getting started
